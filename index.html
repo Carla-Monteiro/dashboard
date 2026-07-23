@@ -462,40 +462,53 @@ function mapearDados(dados){
   }));
 }
 
-/* ---- Carregar de Vercel Function Automaticamente ---- */
+/* ---- Carregar Automaticamente do SharePoint via API REST ---- */
 function carregarArquivoSharePoint(){
   const sync = $("#sync");
+  const siteUrl = "https://unifeb.sharepoint.com/sites/SuporteDTI";
   
-  // URL da Vercel Function (será seu domínio)
-  const apiUrl = "https://dashboard-unifeb-ti.vercel.app/api/chamados";
+  // URL REST para buscar arquivo do SharePoint
+  const apiUrl = `${siteUrl}/_api/web/GetFileByServerRelativeUrl('/Documentos%20Compartilhados/chamados_realtime.json')/$value`;
   
   fetch(apiUrl, {
     method: 'GET',
     headers: {
       'Accept': 'application/json'
-    }
+    },
+    credentials: 'include'
   })
   .then(r => {
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    if(!r.ok) {
+      throw new Error(`HTTP ${r.status}`);
+    }
     return r.json();
   })
-  .then(resultado => {
-    if(resultado.success && resultado.data && resultado.data.length > 0){
-      CHAMADOS = mapearDados(resultado.data);
+  .then(dados => {
+    // Verificar se é array
+    if(Array.isArray(dados) && dados.length > 0){
+      CHAMADOS = mapearDados(dados);
       kpis();
       tabela();
       setores();
       graficos();
       historico7dias();
       sync.textContent = new Date().toLocaleString("pt-BR", {timeZone:"America/Sao_Paulo"});
-      console.log(`✅ ${CHAMADOS.length} chamados sincronizados via API`);
-    } else {
-      sync.innerHTML = '🔄 Aguardando dados...';
+      console.log(`✅ ${CHAMADOS.length} chamados sincronizados automaticamente!`);
+    } else if(dados.value && Array.isArray(dados.value)){
+      // Caso retorne com .value
+      CHAMADOS = mapearDados(dados.value);
+      kpis();
+      tabela();
+      setores();
+      graficos();
+      historico7dias();
+      sync.textContent = new Date().toLocaleString("pt-BR", {timeZone:"America/Sao_Paulo"});
+      console.log(`✅ ${CHAMADOS.length} chamados sincronizados!`);
     }
   })
   .catch(err => {
-    console.log("API ainda não pronta, usando dados de exemplo:", err.message);
-    sync.innerHTML = '🔄 Sincronizando...';
+    sync.textContent = '⏳ Sincronizando...';
+    console.log("Aguardando sincronização:", err.message);
   });
 }
 
