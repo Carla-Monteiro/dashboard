@@ -854,7 +854,7 @@ const log = {
 
 // ========== SINCRONIZAÇÃO EM TEMPO REAL ==========
 async function carregarDados() {
-  try {s
+  try {
     // Tentar carregar do cache primeiro
     const cached = localStorage.getItem(CONFIG.CACHE_KEY);
     if (cached) {
@@ -888,8 +888,9 @@ const response = await Promise.race([
     atualizarSyncStatus('Erro na sincronização', 'error');
     
     // Se não tiver cache, usar exemplo
+    // Sem fallback - força dados do servidor Python
     if (!CHAMADOS.length) {
-      CHAMADOS = exemplosDados();
+      console.warn('⚠️ Nenhum dado carregado do servidor Python');
       renderizar();
     }
   }
