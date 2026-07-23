@@ -462,40 +462,60 @@ function mapearDados(dados){
   }));
 }
 
-/* ---- Carregar SharePoint ---- */
-function carregarSharePoint(){
+/* ---- Carregar Arquivo JSON do SharePoint Automaticamente ---- */
+function carregarArquivoSharePoint(){
   const siteUrl = "https://unifeb.sharepoint.com/sites/SuporteDTI";
-  const listName = "Chamados";
+  const folderPath = "Documentos Compartilhados/dashboard";
+  const fileName = "chamados.json";
   
   const sync = $("#sync");
-  sync.innerHTML = '<span class="loading"></span> Sincronizando...';
   
-  // Construir URL da API REST do SharePoint
-  const apiUrl = `${siteUrl}/_api/web/lists/getByTitle('${listName}')/items?$select=NumeroChamado,Titulo,Status,Prioridade,Descricao,Solicitante,Email,DataAbertura,PrazoSLA,Responsavel,Setor,ID&$top=5000`;
+  // URL para buscar arquivo via API REST do SharePoint
+  const apiUrl = `${siteUrl}/_api/web/GetFileByServerRelativeUrl('/sites/SuporteDTI/Documentos%20Compartilhados/dashboard/chamados.json')/$value`;
   
   fetch(apiUrl, {
-    headers: {'Accept': 'application/json'}
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json'
+    },
+    credentials: 'include'
   })
   .then(r => {
-    if(r.status === 401) throw new Error("Sem acesso - faça login no SharePoint");
-    if(!r.ok) throw new Error(`Erro ${r.status}`);
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json();
   })
-  .then(data => {
-    if(data.value && data.value.length){
-      CHAMADOS = mapearDados(data.value);
+  .then(dados => {
+    if(Array.isArray(dados) && dados.length > 0){
+      CHAMADOS = mapearDados(dados);
       kpis();
       tabela();
       setores();
-      sync.textContent = new Date().toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo"});
-      alert(`✅ ${CHAMADOS.length} chamados sincronizados!`);
+      sync.textContent = new Date().toLocaleString("pt-BR", {timeZone:"America/Sao_Paulo"});
+      console.log(`✅ ${CHAMADOS.length} chamados sincronizados de ${fileName}`);
     }
   })
   .catch(err => {
-    sync.textContent = "Erro ao sincronizar";
-    console.error(err);
-    // Fallback: usar upload JSON
+    sync.innerHTML = '🔄 Aguardando sincronização...';
+    console.log("Arquivo ainda não criado ou erro de acesso");
   });
+}
+
+/* ---- Iniciar Sincronização Automática ---- */
+function iniciarSincronizacaoAutomatica(){
+  // Sincroniza imediatamente na primeira vez
+  carregarArquivoSharePoint();
+  
+  // Depois sincroniza a cada 30 segundos
+  setInterval(() => {
+    carregarArquivoSharePoint();
+  }, 30000);
+  
+  console.log("✅ Sincronização automática ativada (30 segundos)");
+}
+
+/* ---- Carregar SharePoint via Upload Manual ---- */
+function carregarSharePoint(){
+  $("#sync").innerHTML = '<span class="loading"></span> Use o botão "📤 Carregar JSON"';
 }
 
 /* ---- Carregar arquivo JSON ---- */
@@ -1298,6 +1318,9 @@ $("#csv").onclick = ()=>{
 /* ---- init ---- */
 $("#sync").textContent = new Date().toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo"});
 kpis(); tabela(); setores();
+
+// Iniciar sincronização automática com arquivo do SharePoint
+iniciarSincronizacaoAutomatica();
 </script>
 </body>
 </html>
