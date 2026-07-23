@@ -1285,16 +1285,51 @@ function salvarAlteracoes(){
   
   const novoStatus = $("#m-status").value;
   const novaPrio = $("#m-prioridade").value;
+  const novoSetor = $("#m-setor")?.value || "";
   
   const c = CHAMADOS.find(x=>x.id===chamadoAtual.id);
   if(c){
     c.status = novoStatus;
     c.prioridade = novaPrio;
+    if(novoSetor) c.setor = novoSetor;
+    
+    // Sincronizar com SharePoint via API
+    sincronizarComSharePoint(c.id, novoStatus, novaPrio, novoSetor);
     
     alert(`✅ Chamado ${c.id} atualizado!\n\nStatus: ${novoStatus}\nPrioridade: ${novaPrio}`);
     fecharModal();
     tabela();
     kpis();
+  }
+}
+
+/* ---- Sincronizar Mudanças com SharePoint ---- */
+async function sincronizarComSharePoint(chamadoId, status, prioridade, setor){
+  try {
+    const payload = {
+      chamadoId,
+      status,
+      prioridade,
+      setor
+    };
+    
+    const response = await fetch('https://dashboard-unifeb-ti.vercel.app/api/salvar-chamados', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    const resultado = await response.json();
+    
+    if(resultado.success){
+      console.log("✅ Sincronizado com SharePoint:", chamadoId);
+    } else {
+      console.warn("⚠️ Erro ao sincronizar:", resultado.error);
+    }
+  } catch(err) {
+    console.warn("⚠️ Aviso de sincronização:", err.message);
   }
 }
 
