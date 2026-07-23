@@ -863,17 +863,17 @@ async function carregarDados() {
       log.info('✓ Dados carregados do cache');
     }
 
-    // Atualizar do servidor em paralelo
-    atualizarSyncStatus('Sincronizando...', 'loading');
-    
-    const response = await Promise.race([
-      fetch('chamados_realtime.json', { 
-        headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), CONFIG.TIMEOUT)
-      )
-    ]);
+// Atualizar do servidor em paralelo
+atualizarSyncStatus('Sincronizando...', 'loading');
+
+const response = await Promise.race([
+  fetch('http://localhost:5000/api/chamados', { 
+    headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
+  }),
+  new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Timeout')), CONFIG.TIMEOUT)
+  )
+]);
 
     if (response.ok) {
       const dados = await response.json();
