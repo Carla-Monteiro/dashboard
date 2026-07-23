@@ -867,7 +867,7 @@ async function carregarDados() {
 atualizarSyncStatus('Sincronizando...', 'loading');
 
 const response = await Promise.race([
-  fetch('http://10.16.2.173:5000/api/chamados', { 
+  fetch('https://CarlaMonteiro20.pythonanywhere.com/api/chamados', { 
     headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
   }),
   new Promise((_, reject) => 
