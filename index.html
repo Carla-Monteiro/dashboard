@@ -867,7 +867,7 @@ async function carregarDados() {
 atualizarSyncStatus('Sincronizando...', 'loading');
 
 const response = await Promise.race([
-  fetch('http://localhost:5000/api/chamados', { 
+  fetch('http://10.16.2.173:5000/api/chamados', { 
     headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
   }),
   new Promise((_, reject) => 
